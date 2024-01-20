@@ -1,19 +1,25 @@
-const express = require('express')
-require('dotenv').config()
-const mongoose = require('mongoose');
-
-mongoose.connect(process.env.URL).then(()=>{
-  console.log("connected to mongodb")
-}).catch((err)=>{
-  console.log(err)
-})
-
-const app = express()
-
-app.get('/', (req, res) => {
-  res.send('Successful Response');
+//imports
+const express = require("express");
+const app = express();
+require("dotenv").config();
+const { connect } = require("./src/models/db");
+const {
+  zodErrorHandlerMiddleware,
+} = require("./src/middlewares/ValidationError");
+const { globalErrorHandler } = require("./src/middlewares/GlobalError");
+const router = require("./src/routes/api");
+////
+app.use(express.json());
+app.use("/api", router);
+app.get("/", (req, res) => {
+  res.send("Successful Response");
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running at ${process.env.PORT}`)
-})
+app.use(zodErrorHandlerMiddleware);
+app.use(globalErrorHandler);
+
+connect().then(() => {
+  app.listen(process.env.PORT, () => {
+    console.log(`Server is running at ${process.env.PORT}`);
+  });
+});
