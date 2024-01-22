@@ -47,7 +47,6 @@ Auth.register = async function register(req, res, next) {
 
 Auth.login = async function (req, res, next) {
   try {
-    console.log(req.body);
     const data = req.body;
     const loginSchema = z.object({
       email: z.string().email(),
@@ -73,7 +72,7 @@ Auth.login = async function (req, res, next) {
     } else {
       res
         .status(401)
-        .json({ status: false, message: "Email or password is wrong" });
+        .json({ status: false, message: "Credentials is wrong" });
     }
   } catch (err) {
     next(err);
