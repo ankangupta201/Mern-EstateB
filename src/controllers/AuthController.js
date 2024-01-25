@@ -2,7 +2,13 @@ const { User } = require("../models/db");
 const { z } = require("zod");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { newUser } = require("../utils/responseMessage")
+const { code } = require("../utils/httpcode")
+const { v4: uuidv4 } = require('uuid');
+const { fromZodError } = require('zod-validation-error');
+
 require("dotenv").config();
+
 const Auth = {};
 Auth.register = async function register(req, res, next) {
   try {
@@ -17,11 +23,19 @@ Auth.register = async function register(req, res, next) {
       })
       .refine((data) => data.password === data.confirm_password, {
         message: "Passwords don't match",
-        path: ["confirm_password"],
+        // path: ["confirm_password"],
       });
     registrationSchema.parse(data);
 
     const hashPassword = await bcrypt.hash(data.password, 10);
+
+    const emailExist = await User.findOne({ email: data.email })
+    if (emailExist != null) {
+      res.status(code.badRequest).json({
+        status: false,
+        message: newUser.error.alreadyRegistered,
+      })
+    }
 
     const user = await User.create({
       first_name: data.first_name,
@@ -29,19 +43,26 @@ Auth.register = async function register(req, res, next) {
       email: data.email,
       password: hashPassword,
     });
-    const signedToken = generateToken(user);
+    // const signedToken = generateToken(user);
 
     const userWithoutPassword = { ...user.toObject() };
     delete userWithoutPassword.password;
 
-    res.status(201).json({
+    res.status(code.created).json({
       status: true,
-      message: "User created Successfully",
+      message: newUser.success.created,
       user: userWithoutPassword,
-      token: signedToken,
+      // token: signedToken,
     });
   } catch (error) {
-    next(error);
+    const validationError = fromZodError(error);
+    // the error is now readable by the user
+    // console.log(validationError.toString());
+    res.status(code.badRequest).json({
+      status: false,
+      message: validationError.toString()
+    })
+
   }
 };
 
@@ -63,19 +84,24 @@ Auth.login = async function (req, res, next) {
       const signedToken = generateToken(user);
       const userWithoutPassword = { ...user.toObject() };
       delete userWithoutPassword.password;
-      return res.status(201).json({
+
+      return res.status(code.ok).json({
         status: true,
-        message: "User loged in successfully",
+        message: newUser.success.logedIn,
         user: userWithoutPassword,
         token: signedToken,
       });
     } else {
       res
         .status(401)
-        .json({ status: false, message: "Credentials is wrong" });
+        .json({ status: false, message: "Credentials are wrong" });
     }
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    const validationError = fromZodError(error);
+    res.status(code.badRequest).json({
+      status: false,
+      message: validationError.toString()
+    })
   }
 };
 
@@ -90,7 +116,7 @@ function generateToken(user) {
     expiresIn: expiresIn,
     algorithm: "HS256",
   });
-  return "Bearer " + signedToken;
+  return signedToken;
 }
 
 module.exports = Auth;
