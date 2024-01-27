@@ -2,10 +2,10 @@ const { User } = require("../models/db");
 const { z } = require("zod");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { newUser } = require("../utils/responseMessage")
-const { code } = require("../utils/httpcode")
-const { v4: uuidv4 } = require('uuid');
-const { fromZodError } = require('zod-validation-error');
+const { newUser } = require("../utils/responseMessage");
+const { code } = require("../utils/httpcode");
+const { v4: uuidv4 } = require("uuid");
+const { fromZodError } = require("zod-validation-error");
 
 require("dotenv").config();
 
@@ -15,26 +15,34 @@ Auth.register = async function register(req, res, next) {
     const data = req.body;
     const registrationSchema = z
       .object({
-        first_name: z.string().min(3).max(20),
-        last_name: z.string().min(3).max(20),
-        email: z.string().email(),
-        password: z.string().min(8),
+        first_name: z
+          .string()
+          .min(3, { message: "First name should be Minimum 3 charecters" })
+          .max(20, { message: "First name should be Maximum 20 charecters" }),
+        last_name: z
+          .string()
+          .min(3, { message: "Last name should be Minimum 3 charecters" })
+          .max(20, { message: "First name should be Maximum 20 charecters" }),
+        email: z.string().email({ message: "Invalis Email Addess" }),
+        password: z
+          .string()
+          .min(8, { message: "Password should be minimum 8 charecters" }),
         confirm_password: z.string(),
       })
       .refine((data) => data.password === data.confirm_password, {
         message: "Passwords don't match",
-        // path: ["confirm_password"],
+        path: ["confirm_password"],
       });
     registrationSchema.parse(data);
 
     const hashPassword = await bcrypt.hash(data.password, 10);
 
-    const emailExist = await User.findOne({ email: data.email })
+    const emailExist = await User.findOne({ email: data.email });
     if (emailExist != null) {
       res.status(code.badRequest).json({
         status: false,
         message: newUser.error.alreadyRegistered,
-      })
+      });
     }
 
     const user = await User.create({
@@ -58,11 +66,11 @@ Auth.register = async function register(req, res, next) {
     const validationError = fromZodError(error);
     // the error is now readable by the user
     // console.log(validationError.toString());
-    res.status(code.badRequest).json({
-      status: false,
-      message: validationError.toString()
-    })
-
+    // res.status(code.badRequest).json({
+    //   status: false,
+    //   message: validationError.toString(),
+    // });
+    next(error);
   }
 };
 
@@ -92,16 +100,15 @@ Auth.login = async function (req, res, next) {
         token: signedToken,
       });
     } else {
-      res
-        .status(401)
-        .json({ status: false, message: "Credentials are wrong" });
+      res.status(401).json({ status: false, message: "Credentials are wrong" });
     }
   } catch (error) {
-    const validationError = fromZodError(error);
-    res.status(code.badRequest).json({
-      status: false,
-      message: validationError.toString()
-    })
+    // const validationError = fromZodError(error);
+    // res.status(code.badRequest).json({
+    //   status: false,
+    //   message: validationError.toString(),
+    // });
+    next(error);
   }
 };
 
