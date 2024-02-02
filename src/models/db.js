@@ -6,4 +6,5 @@ db.connect = async function () {
   console.log("Connected to database");
 };
 db.User = require("./User")(mongoose);
+db.Listing = require("./Listings")(mongoose);
 module.exports = db;
