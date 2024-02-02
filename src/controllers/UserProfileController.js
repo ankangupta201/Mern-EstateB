@@ -1,7 +1,7 @@
 const { User } = require("../models/db");
 const { ObjectId } = require("mongodb");
 const { z } = require("zod");
-const { updateUser } = require("../utils/responseMessage");
+const { updateUser, listingOperations } = require("../utils/responseMessage");
 const { code } = require("../utils/httpcode");
 const bcrypt = require("bcrypt");
 
@@ -34,8 +34,11 @@ module.exports = {
       const updatedUser = await User.findByIdAndUpdate(id, {
         $set: updateData,
       });
-      const userWithoutPassword = { ...updatedUser.toObject() };
+      const user = await User.findById(id);
+      // console.log(updatedUser);
+      const userWithoutPassword = { ...user.toObject() };
       delete userWithoutPassword.password;
+      console.log(userWithoutPassword);
       if (updateUser) {
         res.status(code.ok).json({
           status: true,
@@ -49,7 +52,7 @@ module.exports = {
       } else {
         res.status(code.badRequest).json({
           status: false,
-          message: updateUser.error.error,
+          message: listingOperations.error.error,
           error: error.errors || "Internal Server Error",
         });
       }

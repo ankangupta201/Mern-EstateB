@@ -28,4 +28,39 @@ module.exports = {
       permissionDenied: "Permission denied. You cannot update this user",
     },
   },
+  listingOperations: {
+    create: {
+      success: {
+        created: "Listing created successfully",
+      },
+      error: {
+        error: "Error creating listing",
+        invalidFields: "Invalid fields provided for creation",
+        permissionDenied: "Permission denied. You cannot create this listing",
+      },
+    },
+    update: {
+      success: {
+        updated: "Listing updated successfully",
+      },
+      error: {
+        error: "Error updating listing",
+        invalidID: "Please try again with a valid ID",
+        listingNotFound: "Listing not found",
+        invalidFields: "Invalid fields provided for update",
+        permissionDenied: "Permission denied. You cannot update this listing",
+      },
+    },
+    delete: {
+      success: {
+        deleted: "Listing deleted successfully",
+      },
+      error: {
+        error: "Error deleting listing",
+        invalidID: "Please try again with a valid ID",
+        listingNotFound: "Listing not found",
+        permissionDenied: "Permission denied. You cannot delete this listing",
+      },
+    },
+  },
 };
